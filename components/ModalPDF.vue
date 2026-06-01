@@ -1,0 +1,457 @@
+<template>
+  <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-neutral rounded-lg shadow-lg w-full max-w-3xl p-6 relative" style="max-height: 95vh; overflow-y: auto;">
+      <button @click="$emit('close')" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+      <div class="overflow-y-auto" style="max-height: 80vh;">
+        <div ref="pdfContent" class="bg-neutral border-2 border-primary p-0 text-xs font-sans" style="min-width: 700px;">
+          <!-- Encabezado -->
+          <div class="flex items-center border-b-2 border-primary">
+            <div class="flex-1 text-center text-2xl font-bold text-primary py-2">
+              <span v-if="modoLectura">{{ form.empresa }}</span>
+              <input v-else v-model="form.empresa" class="w-full text-center font-bold text-primary bg-transparent outline-none" />
+            </div>
+            <div class="flex-1 text-center text-2xl font-bold text-primary py-2 border-l-2 border-primary">
+              <span v-if="modoLectura">{{ form.titulo }}</span>
+              <input v-else v-model="form.titulo" class="w-full text-center font-bold text-primary bg-transparent outline-none" />
+            </div>
+            <div class="w-20 text-right text-2xl font-bold text-primary py-2 border-l-2 border-primary pr-2">
+              <span v-if="modoLectura">{{ form.numero }}</span>
+              <input v-else v-model="form.numero" class="w-full text-right font-bold text-primary bg-transparent outline-none" />
+            </div>
+          </div>
+          <!-- Datos del Proveedor -->
+          <div class="p-2 border-b border-primary">
+            <span class="font-bold text-primary">Datos del Proveedor:</span>
+            <span v-if="modoLectura">{{ form.proveedor }}</span>
+            <input v-else v-model="form.proveedor" class="font-bold bg-transparent outline-none" />
+            <br>
+            Domicilio Legal: <span v-if="modoLectura">{{ form.domicilioProveedor }}</span>
+            <input v-else v-model="form.domicilioProveedor" class="bg-transparent outline-none w-2/3" />
+            <br>
+            Cuentas Bancarias en <span class="font-bold">CUP:<span v-if="modoLectura">{{ form.cupProveedor }}</span><input v-else v-model="form.cupProveedor" class="bg-transparent outline-none w-32 font-bold" /></span> en <span class="font-bold">USD: <span v-if="modoLectura">{{ form.usdProveedor }}</span><input v-else v-model="form.usdProveedor" class="bg-transparent outline-none w-40 font-bold" /></span>
+            <br>
+            NIT: <span v-if="modoLectura">{{ form.nitProveedor }}</span><input v-else v-model="form.nitProveedor" class="bg-transparent outline-none w-40" />
+          </div>
+          <!-- Datos del Cliente -->
+            <div class="p-2 border-b border-primary">
+              <span class="font-bold text-primary">Datos del Cliente:</span>
+              <span v-if="props.ofertaData && props.ofertaData.contrato && props.ofertaData.contrato.entidad && props.ofertaData.contrato.entidad.nombre">
+                {{ props.ofertaData.contrato.entidad.nombre }}
+              </span><br>
+              Domicilio Legal: <span v-if="modoLectura">{{ form.domicilioCliente }}</span>
+              <input v-else v-model="form.domicilioCliente" class="bg-transparent outline-none w-2/3" />
+              <br>
+              Cuentas Bancarias en CUP: <span v-if="modoLectura">{{ form.cupCliente }}</span><input v-else v-model="form.cupCliente" class="bg-transparent outline-none w-32" /> Sucursal: <span v-if="modoLectura">{{ form.sucursalCliente }}</span><input v-else v-model="form.sucursalCliente" class="bg-transparent outline-none w-32" />
+              <br>
+              Código REEUP: <span v-if="modoLectura">{{ form.reeupCliente }}</span><input v-else v-model="form.reeupCliente" class="bg-transparent outline-none w-32" /> NIT: <span v-if="modoLectura">{{ form.nitCliente }}</span><input v-else v-model="form.nitCliente" class="bg-transparent outline-none w-32" />
+            </div>
+                     <!-- Tabla de productos/servicios -->
+           <table class="w-full border-collapse border-primary" style="font-size: 12px; table-layout: fixed;">
+             <thead>
+               <tr class="bg-accent/40 text-primary" style="height: 40px;">
+                 <th class="border border-primary px-1" style="width: 8%;">No</th>
+                 <th class="border border-primary px-1" style="width: 35%;">Descripción</th>
+                 <th class="border border-primary px-1" style="width: 12%;">U/M</th>
+                 <th class="border border-primary px-1" style="width: 15%;">Cantidad</th>
+                 <th class="border border-primary px-1" style="width: 15%;">Precio</th>
+                 <th class="border border-primary px-1" style="width: 15%;">Importe</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr v-for="(row, i) in form.tabla" :key="i" style="height: 40px;">
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.no }}</span>
+                   <input v-else v-model="row.no" class="w-full bg-transparent outline-none text-center" />
+                 </td>
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.descripcion }}</span>
+                   <input v-else v-model="row.descripcion" class="w-full bg-transparent outline-none" />
+                 </td>
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.um }}</span>
+                   <input v-else v-model="row.um" class="w-full bg-transparent outline-none text-center" />
+                 </td>
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.cantidad }}</span>
+                   <input v-else v-model="row.cantidad" class="w-full bg-transparent outline-none text-center" @input="calcularImporte(i)" />
+                 </td>
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.precio }}</span>
+                   <input v-else v-model="row.precio" class="w-full bg-transparent outline-none text-center" @input="calcularImporte(i)" />
+                 </td>
+                 <td class="border border-primary px-1" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ row.importe }}</span>
+                   <input v-else v-model="row.importe" class="w-full bg-transparent outline-none text-center" readonly />
+                 </td>
+               </tr>
+               <tr style="height: 40px;">
+                 <td class="border border-primary px-1 text-right font-bold" colspan="4" style="vertical-align: middle;">Totales</td>
+                 <td class="border border-primary px-1 text-right font-bold" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ form.totalPrecio }}</span>
+                   <input v-else v-model="form.totalPrecio" class="w-full bg-transparent outline-none text-right font-bold" />
+                 </td>
+                 <td class="border border-primary px-1 text-right font-bold" style="vertical-align: middle;">
+                   <span v-if="modoLectura">{{ form.totalImporte }}</span>
+                   <input v-else v-model="form.totalImporte" class="w-full bg-transparent outline-none text-right font-bold" />
+                 </td>
+               </tr>
+             </tbody>
+           </table>
+          <!-- Representantes -->
+          <div class="flex border-t border-primary mt-0">
+            <div class="w-1/2 p-2 border-r border-primary">
+              <div class="font-bold text-primary">REPRESENTANTE DEL PROVEEDOR</div>
+              Nombre: <span v-if="modoLectura">{{ form.nombreProveedor }}</span>
+              <input v-else v-model="form.nombreProveedor" class="bg-transparent outline-none w-40" /><br>
+              CI: <span v-if="modoLectura">{{ form.ciProveedor }}</span>
+              <input v-else v-model="form.ciProveedor" class="bg-transparent outline-none w-32" /><br>
+              Cargo: <span v-if="modoLectura">{{ form.cargoProveedor }}</span>
+              <input v-else v-model="form.cargoProveedor" class="bg-transparent outline-none w-32" /><br>
+              Fecha de Entrega: <span v-if="modoLectura">{{ form.fechaEntregaProveedor }}</span>
+              <input v-else v-model="form.fechaEntregaProveedor" class="bg-transparent outline-none w-32" /><br>
+              Firma: <span v-if="modoLectura">{{ form.firmaProveedor }}</span>
+              <input v-else v-model="form.firmaProveedor" class="bg-transparent outline-none w-32" /><br>
+              Cuño: <span v-if="modoLectura">{{ form.cunoProveedor }}</span>
+              <input v-else v-model="form.cunoProveedor" class="bg-transparent outline-none w-32" />
+            </div>
+            <div class="w-1/2 p-2">
+              <div class="font-bold text-primary">REPRESENTANTE DEL CLIENTE</div>
+              Nombre: <span v-if="modoLectura">{{ form.nombreCliente }}</span>
+              <input v-else v-model="form.nombreCliente" class="bg-transparent outline-none w-40" /><br>
+              CI: <span v-if="modoLectura">{{ form.ciCliente }}</span>
+              <input v-else v-model="form.ciCliente" class="bg-transparent outline-none w-32" /><br>
+              Cargo: <span v-if="modoLectura">{{ form.cargoCliente }}</span>
+              <input v-else v-model="form.cargoCliente" class="bg-transparent outline-none w-32" /><br>
+              Fecha de Entrega: <span v-if="modoLectura">{{ form.fechaEntregaCliente }}</span>
+              <input v-else v-model="form.fechaEntregaCliente" class="bg-transparent outline-none w-32" /><br>
+              Firma: <span v-if="modoLectura">{{ form.firmaCliente }}</span>
+              <input v-else v-model="form.firmaCliente" class="bg-transparent outline-none w-32" />
+            </div>
+          </div>
+          <!-- Observaciones y pie -->
+          <div class="p-2 border-t border-primary">
+            <span class="font-bold text-primary">Observaciones:</span><br>
+            <span v-if="modoLectura">{{ form.observaciones }}</span>
+            <textarea v-else v-model="form.observaciones" class="w-full bg-transparent outline-none resize-none" rows="2"></textarea><br>
+            <span class="font-bold">Paguese a: <span v-if="modoLectura">{{ form.pagoA }}</span><input v-else v-model="form.pagoA" class="bg-transparent outline-none w-96 font-bold" /></span><br>
+            <span class="text-red-600 font-bold">{{ form.validez }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button @click="exportarPDF" class="px-6 py-2 bg-primary text-neutral rounded hover:bg-primary/90 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Exportar a PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+<script setup>
+// ...existing code...
+import { ref, reactive, watch, nextTick } from 'vue';
+
+const props = defineProps({
+  show: Boolean,
+  ofertaData: {
+    type: Object,
+    default: () => ({})
+  }
+});
+const emit = defineEmits(['close']);
+
+const pdfContent = ref(null);
+const modoLectura = ref(false);
+
+const form = reactive({
+  empresa: 'SOLUTEL S.R.L',
+  titulo: 'OFERTA COMERCIAL',
+  numero: '/25',
+  proveedor: 'SOLUTEL S.R.L',
+  domicilioProveedor: 'Calle Ernesto Valdez Muñoz No. 10 entre Independencia y Céspedes,',
+  cupProveedor: '1252354000140315',
+  usdProveedor: '1299750000010836',
+  nitProveedor: '50004182197',
+  domicilioCliente: '',
+  cupCliente: '',
+  sucursalCliente: '',
+  reeupCliente: '',
+  nitCliente: '',
+  tabla: Array.from({ length: 9 }, (_, i) => ({
+    no: i === 0 ? 'No.1' : '',
+    descripcion: '',
+    um: '',
+    cantidad: '',
+    precio: '',
+    importe: ''
+  })),
+  totalPrecio: '0.00',
+  totalImporte: '0.00',
+  nombreProveedor: 'Belkis Martínez Arevalo',
+  ciProveedor: '70081403279',
+  cargoProveedor: 'Especialista',
+  fechaEntregaProveedor: '',
+  firmaProveedor: '',
+  cunoProveedor: '',
+  nombreCliente: '',
+  ciCliente: '',
+  cargoCliente: '',
+  fechaEntregaCliente: '',
+  firmaCliente: '',
+  observaciones: '',
+  pagoA: 'SOLUTEL S.R.L Cuenta Bancaria: CUP:1252354000140315',
+    validez: ''
+});
+
+const valoresBase = {
+  empresa: 'SOLUTEL S.R.L',
+  titulo: 'OFERTA COMERCIAL',
+  numero: '/25',
+  proveedor: 'SOLUTEL S.R.L',
+  domicilioProveedor: 'Calle Ernesto Valdez Muñoz No. 10 entre Independencia y Céspedes,',
+  cupProveedor: '1252354000140315',
+  usdProveedor: '1299750000010836',
+  nitProveedor: '50004182197',
+  domicilioCliente: '',
+  cupCliente: '',
+  sucursalCliente: '',
+  reeupCliente: '',
+  nitCliente: '',
+  tabla: Array.from({ length: 9 }, (_, i) => ({
+    no: i === 0 ? 'No.1' : '',
+    descripcion: '',
+    um: '',
+    cantidad: '',
+    precio: '',
+    importe: ''
+  })),
+  totalPrecio: '0.00',
+  totalImporte: '0.00',
+  nombreProveedor: 'Belkis Martínez Arevalo',
+  ciProveedor: '70081403279',
+  cargoProveedor: 'Especialista',
+  fechaEntregaProveedor: '',
+  firmaProveedor: '',
+  cunoProveedor: '',
+  nombreCliente: '',
+  ciCliente: '',
+  cargoCliente: '',
+  fechaEntregaCliente: '',
+  firmaCliente: '',
+  observaciones: '',
+  pagoA: 'SOLUTEL S.R.L Cuenta Bancaria: CUP:1252354000140315',
+  validez: 'La Oferta válida por 7 días'
+};
+
+function resetForm() {
+  Object.assign(form, JSON.parse(JSON.stringify(valoresBase)));
+}
+
+// Función para calcular el importe de una fila específica
+function calcularImporte(index) {
+  const row = form.tabla[index];
+  const cantidad = parseFloat(row.cantidad) || 0;
+  const precio = parseFloat(row.precio) || 0;
+  const importe = cantidad * precio;
+  
+  // Formatear el importe con 2 decimales
+  row.importe = importe.toFixed(2);
+  
+  // Recalcular totales
+  calcularTotales();
+}
+
+// Función para calcular los totales de la tabla
+function calcularTotales() {
+  let totalPrecio = 0;
+  let totalImporte = 0;
+  
+  form.tabla.forEach(row => {
+    const precio = parseFloat(row.precio) || 0;
+    const importe = parseFloat(row.importe) || 0;
+        // Calcular días de validez
+        if (props.ofertaData.fecha_inicio && props.ofertaData.fecha_fin) {
+          const inicio = new Date(props.ofertaData.fecha_inicio);
+          const fin = new Date(props.ofertaData.fecha_fin);
+          const diffMs = fin - inicio;
+          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+          form.validez = `La Oferta válida por ${diffDays} días`;
+        } else {
+          form.validez = 'La Oferta válida por 7 días';
+        }
+    
+    totalPrecio += precio;
+    totalImporte += importe;
+  });
+  
+  // Formatear los totales con 2 decimales
+  form.totalPrecio = totalPrecio.toFixed(2);
+  form.totalImporte = totalImporte.toFixed(2);
+}
+
+watch(
+  () => props.show,
+  (nuevo) => {
+    if (nuevo) {
+      resetForm();
+    }
+    if (nuevo && props.ofertaData) {
+      if (props.ofertaData.contrato && props.ofertaData.contrato.entidad) {
+        const entidad = props.ofertaData.contrato.entidad;
+        form.domicilioCliente = entidad.direccion || '';
+        form.cupCliente = entidad.cuenta_bancaria || '';
+        form.sucursalCliente = '';
+        form.reeupCliente = entidad.codigo_reo || '';
+        form.nitCliente = entidad.codigo_nit || '';
+      }
+      // Cargar descripciones desde la lista de descripciones
+      if (props.ofertaData.descripciones && Array.isArray(props.ofertaData.descripciones)) {
+        // Limpiar la tabla primero
+        form.tabla.forEach(row => {
+          row.descripcion = '';
+        });
+        
+                 // Llenar la tabla con las descripciones
+         props.ofertaData.descripciones.forEach((descripcionObj, index) => {
+           if (index < form.tabla.length) {
+             form.tabla[index].descripcion = descripcionObj.descripcion || '';
+             form.tabla[index].no = `No.${index + 1}`;
+           }
+         });
+         
+         // Calcular totales después de cargar las descripciones
+         calcularTotales();
+             } else if (props.ofertaData.descripcion) {
+         // Fallback para compatibilidad con datos antiguos
+         form.tabla[0].descripcion = props.ofertaData.descripcion;
+         calcularTotales();
+       }
+    }
+    if (!nuevo) {
+      resetForm();
+    }
+  }
+);
+
+async function exportarPDF() {
+  modoLectura.value = true;
+  await nextTick();
+  try {
+    // Only import heavy browser libraries on the client when needed
+    if (typeof window === 'undefined') {
+      console.warn('exportarPDF called on server - aborting');
+      return;
+    }
+    const html2canvasModule = await import('html2canvas');
+    const html2canvas = html2canvasModule && (html2canvasModule.default || html2canvasModule);
+    const jsPDFModule = await import('jspdf');
+    const jsPDF = jsPDFModule && (jsPDFModule.jsPDF || jsPDFModule.default || jsPDFModule);
+    // Esperar un poco más para que todos los elementos se rendericen correctamente
+    await new Promise(resolve => setTimeout(resolve, 100));
+    const element = pdfContent.value;
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      width: element.scrollWidth,
+      height: element.scrollHeight,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight
+    });
+    const imgData = canvas.toDataURL('image/png', 1.0);
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth - 10;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    if (pdfHeight <= pageHeight - 10) {
+      pdf.addImage(imgData, 'PNG', 5, 5, pdfWidth, pdfHeight);
+    } else {
+      let heightLeft = pdfHeight;
+      let position = 5;
+      pdf.addImage(imgData, 'PNG', 5, position, pdfWidth, pdfHeight);
+      heightLeft -= (pageHeight - 10);
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight + 5;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 5, position, pdfWidth, pdfHeight);
+        heightLeft -= (pageHeight - 10);
+      }
+    }
+    pdf.save('Oferta.pdf');
+  } catch (error) {
+    console.error('Error al generar el PDF:', error);
+    alert('Error al generar el PDF.');
+  } finally {
+    modoLectura.value = false;
+    await nextTick();
+  }
+}
+</script>
+
+<style scoped>
+.font-sans {
+  font-family: Arial, Helvetica, sans-serif;
+}
+input, textarea {
+  border: none;
+  border-bottom: 1px dotted #93C5FD; /* accent */
+  outline: none;
+  background: transparent;
+  font-size: inherit;
+  color: inherit;
+}
+input:focus, textarea:focus {
+  border-bottom: 1px solid #3362d6; /* primary */
+  background: rgba(147,197,253,0.08); /* subtle accent background */
+}
+
+/* Estilos específicos para mejorar la exportación a PDF */
+table {
+  border-collapse: collapse !important;
+  table-layout: fixed !important;
+}
+
+th, td {
+  border: 1px solid #3362d6 !important; /* primary */
+  padding: 4px !important;
+  vertical-align: middle !important;
+  height: 40px !important;
+  box-sizing: border-box !important;
+}
+
+thead th {
+  background-color: rgba(147,197,253,0.12) !important; /* light accent */
+  color: #3362d6 !important; /* primary */
+  font-weight: bold !important;
+  text-align: center !important;
+}
+
+tbody tr {
+  height: 40px !important;
+}
+
+/* Asegurar que los inputs mantengan su posición */
+input[readonly] {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Estilos para el modo de lectura (exportación) */
+.modo-lectura table {
+  page-break-inside: avoid;
+}
+
+.modo-lectura th,
+.modo-lectura td {
+  page-break-inside: avoid;
+}
+</style>
